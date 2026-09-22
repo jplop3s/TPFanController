@@ -18,39 +18,27 @@ jobs:
         run: |
           msbuild fancontrol\fancontrol.sln /p:Configuration=Release /p:Platform=Win32 /m
 
-      - name: Find compiled files
+      - name: Show generated files
         shell: powershell
         run: |
-          Write-Host "Executáveis encontrados:"
-          Get-ChildItem -Path . -Recurse -Filter *.exe |
-          Select-Object FullName
-
-          Write-Host "Ficheiros INI encontrados:"
-          Get-ChildItem -Path . -Recurse -Filter *.ini |
-          Select-Object FullName
+          Write-Host "Conteudo da pasta Release:"
+          Get-ChildItem -Path "fancontrol\Release" -Recurse
 
       - name: Prepare artifact
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path artifact
 
-          $exe = Get-ChildItem -Path . -Recurse -Filter fancontrol.exe |
-                 Select-Object -First 1
+          Copy-Item "fancontrol\Release\TPFanControl.exe" "artifact\TPFanControl.exe"
 
-          if (-not $exe) {
-              throw "fancontrol.exe não foi encontrado"
+          if (Test-Path "fancontrol\Release\TPFanControl.ini") {
+              Copy-Item "fancontrol\Release\TPFanControl.ini" "artifact\TPFanControl.ini"
+          }
+          elseif (Test-Path "fancontrol\TPFanControl.ini") {
+              Copy-Item "fancontrol\TPFanControl.ini" "artifact\TPFanControl.ini"
           }
 
-          Copy-Item $exe.FullName artifact\fancontrol.exe
-
-          $ini = Get-ChildItem -Path . -Recurse -Filter TPFanControl.ini |
-                 Select-Object -First 1
-
-          if ($ini) {
-              Copy-Item $ini.FullName artifact\TPFanControl.ini
-          }
-
-          Write-Host "Conteúdo final:"
+          Write-Host "Ficheiros finais:"
           Get-ChildItem artifact
 
       - name: Upload compiled program
